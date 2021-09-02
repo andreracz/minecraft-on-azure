@@ -1,0 +1,215 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "13448703979611267028"
+    }
+  },
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Server Name. (will be used as the DNS Label)"
+      }
+    },
+    "numberCpuCores": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "CPUs for the server"
+      }
+    },
+    "memory": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "Memory available to the server. Will allocate all except 100MB to Java"
+      }
+    },
+    "whitelist": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Whitelist of players that will be allowed in the server (use , to separate them)"
+      }
+    },
+    "ops": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Players that can issue commands (use , to separate them)"
+      }
+    },
+    "eula": {
+      "type": "bool",
+      "metadata": {
+        "description": "Accept minecraft server EULA?"
+      }
+    },
+    "maxPlayers": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Max number of players"
+      }
+    },
+    "enableCommandBlock": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable the use of command blocks?"
+      }
+    },
+    "motd": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Server Message of the day"
+      }
+    },
+    "version": {
+      "type": "string",
+      "defaultValue": "LATEST",
+      "metadata": {
+        "description": "Minecraft version to run (use LATEST for current version)"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "fileShareName": "minecraftdata",
+    "storageAccountType": "Standard_LRS",
+    "location": "[resourceGroup().location]",
+    "storageAccountName": "[format('{0}storage', parameters('serverName'))]",
+    "javaMemory": "[sub(mul(parameters('memory'), 1024), 100)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2019-06-01",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "name": "[parameters('serverName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('serverName')]",
+            "properties": {
+              "image": "itzg/minecraft-server",
+              "environmentVariables": [
+                {
+                  "name": "WHITELIST",
+                  "value": "[parameters('whitelist')]"
+                },
+                {
+                  "name": "OPS",
+                  "value": "[parameters('ops')]"
+                },
+                {
+                  "name": "MAX_PLAYERS",
+                  "value": "[parameters('maxPlayers')]"
+                },
+                {
+                  "name": "ENABLE_COMMAND_BLOCK",
+                  "value": "[parameters('enableCommandBlock')]"
+                },
+                {
+                  "name": "MOTD",
+                  "value": "[parameters('motd')]"
+                },
+                {
+                  "name": "MEMORY",
+                  "value": "[format('{0}M', variables('javaMemory'))]"
+                },
+                {
+                  "name": "EULA",
+                  "value": "[parameters('eula')]"
+                },
+                {
+                  "name": "VERSION",
+                  "value": "[parameters('version')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('numberCpuCores')]",
+                  "memoryInGB": "[parameters('memory')]"
+                }
+              },
+              "ports": [
+                {
+                  "port": 25565
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "name": "acishare",
+                  "mountPath": "/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 25565
+            }
+          ],
+          "dnsNameLabel": "[parameters('serverName')]"
+        },
+        "restartPolicy": "Never",
+        "volumes": [
+          {
+            "name": "acishare",
+            "azureFile": {
+              "readOnly": false,
+              "shareName": "[variables('fileShareName')]",
+              "storageAccountName": "[variables('storageAccountName')]",
+              "storageAccountKey": "[listKeys(variables('storageAccountName'), '2021-04-01').keys[0].value]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[0], split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[1], split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[2])]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerIPv4Address": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('serverName'))).ipAddress.ip]"
+    },
+    "containerIPv4Fqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('serverName'))).ipAddress.fqdn]"
+    }
+  }
+}
