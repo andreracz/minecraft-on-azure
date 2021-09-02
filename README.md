@@ -5,3 +5,6 @@ Initially there is only a sample, for running Vanilla Minecraft on Azure Contain
 
 To run it, just create a deployment on azure from a template, pointing it to the compiled arm template available, tweak the parameters, and you are done! Don't forget to accept the EULA, as it will crash the server if you don't.
 
+To deploy the servers:
+
+Vanilla: [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fandreracz%2Fminecraft-on-azure%2Fmaster%2Fvanilla-aci.json)
