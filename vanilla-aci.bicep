@@ -35,7 +35,7 @@ var fileShareName  = 'minecraftdata'
 var storageAccountType  = 'Standard_LRS'
 var location = resourceGroup().location
 var storageAccountName = '${serverName}storage'
-var javaMemory = (memory * 1024) - 100
+var javaMemory = (memory * 1024) - 200
 
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
@@ -148,6 +148,4 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2019-12-01'
   }
 }
 
-output containerIPv4Address string = containerGroup.properties.ipAddress.ip
-output containerIPv4Fqdn string = containerGroup.properties.ipAddress.fqdn
 

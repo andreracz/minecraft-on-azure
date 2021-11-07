@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.613.9944",
-      "templateHash": "13448703979611267028"
+      "version": "0.4.1008.15138",
+      "templateHash": "6967969420110808873"
     }
   },
   "parameters": {
@@ -85,7 +85,7 @@
     "storageAccountType": "Standard_LRS",
     "location": "[resourceGroup().location]",
     "storageAccountName": "[format('{0}storage', parameters('serverName'))]",
-    "javaMemory": "[sub(mul(parameters('memory'), 1024), 100)]"
+    "javaMemory": "[sub(mul(parameters('memory'), 1024), 200)]"
   },
   "resources": [
     {
@@ -128,11 +128,11 @@
                 },
                 {
                   "name": "MAX_PLAYERS",
-                  "value": "[parameters('maxPlayers')]"
+                  "value": "[format('{0}', parameters('maxPlayers'))]"
                 },
                 {
                   "name": "ENABLE_COMMAND_BLOCK",
-                  "value": "[parameters('enableCommandBlock')]"
+                  "value": "[format('{0}', parameters('enableCommandBlock'))]"
                 },
                 {
                   "name": "MOTD",
@@ -144,7 +144,7 @@
                 },
                 {
                   "name": "EULA",
-                  "value": "[parameters('eula')]"
+                  "value": "[format('{0}', parameters('eula'))]"
                 },
                 {
                   "name": "VERSION",
@@ -201,15 +201,5 @@
         "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[0], split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[1], split(format('{0}/default/{1}', variables('storageAccountName'), variables('fileShareName')), '/')[2])]"
       ]
     }
-  ],
-  "outputs": {
-    "containerIPv4Address": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('serverName'))).ipAddress.ip]"
-    },
-    "containerIPv4Fqdn": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('serverName'))).ipAddress.fqdn]"
-    }
-  }
+  ]
 }
