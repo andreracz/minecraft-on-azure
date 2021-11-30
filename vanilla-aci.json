@@ -85,7 +85,7 @@
     "storageAccountType": "Standard_LRS",
     "location": "[resourceGroup().location]",
     "storageAccountName": "[format('{0}storage', parameters('serverName'))]",
-    "javaMemory": "[sub(mul(parameters('memory'), 1024), 200)]"
+    "javaMemory": "[sub(mul(parameters('memory'), 1000), 200)]"
   },
   "resources": [
     {
